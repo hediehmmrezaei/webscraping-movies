@@ -1,12 +1,19 @@
 # Web Scraping Movies Project
 
-This project uses Python to scrape data about the top 50 highly ranked films from a web page. The extracted data is saved into a CSV file and also stored in a SQLite database.
+This project uses Python to scrape data about the top 50 highly ranked films from a webpage. The extracted data is saved into a CSV file and also stored in a SQLite database.
 
 ## Project Description
 
-The goal of this project is to practice web scraping, data extraction, data storage, and basic SQL querying.
+The goal of this project is to practice:
 
-The program collects movie information including:
+- Web scraping
+- HTML parsing
+- Data extraction
+- Data storage
+- Basic SQL querying
+- Uploading a project to GitHub
+
+The program collects the following movie information:
 
 - Average Rank
 - Film Title
@@ -14,17 +21,31 @@ The program collects movie information including:
 
 ## Web Scraping Process
 
-This project uses web scraping to automatically collect movie data from a webpage instead of copying it manually.
+The script first imports the required Python libraries:
 
-The script first sends a request to the webpage using the `requests` library:
+```python
+import requests
+import sqlite3
+import pandas as pd
+from bs4 import BeautifulSoup
+from pathlib import Path
+```
+
+The `requests` library is used to download the webpage, and `BeautifulSoup` is used to parse the HTML content.
+
+The webpage URL is stored in the variable `url`:
+
+```python
+url = 'https://web.archive.org/web/20230902185655/https://en.everybodywiki.com/100_Most_Highly-Ranked_Films'
+```
+
+The script sends a GET request to the webpage and stores the HTML content:
 
 ```python
 html_page = requests.get(url).text
 ```
 
-This downloads the HTML content of the webpage.
-
-Then, the HTML page is parsed using `BeautifulSoup`:
+Then, BeautifulSoup parses the HTML page:
 
 ```python
 data = BeautifulSoup(html_page, 'html.parser')
@@ -32,26 +53,20 @@ data = BeautifulSoup(html_page, 'html.parser')
 
 BeautifulSoup converts the HTML into a structured format so Python can search through the page.
 
-The movie data is stored inside HTML table rows. The script finds the table body using:
+The movie data is stored inside an HTML table. The script finds the table body and table rows:
 
 ```python
 tables = data.find_all('tbody')
 rows = tables[0].find_all('tr')
 ```
 
-After that, the script loops through the rows and extracts the columns:
+The program loops through the rows and extracts the table cells:
 
 ```python
 col = row.find_all('td')
 ```
 
-Each row contains movie information such as:
-
-- Average Rank
-- Film Title
-- Year
-
-The extracted values are placed into a dictionary:
+Each row contains movie information. The extracted data is stored in a dictionary:
 
 ```python
 data_dict = {
@@ -61,7 +76,7 @@ data_dict = {
 }
 ```
 
-Then each dictionary is converted into a pandas DataFrame row and added to the main DataFrame.
+The dictionary is converted into a pandas DataFrame row and added to the main DataFrame.
 
 The loop stops after collecting the first 50 movies:
 
@@ -69,26 +84,77 @@ The loop stops after collecting the first 50 movies:
 if count < 50:
 ```
 
-Finally, the collected data is saved into:
+## Saving the Data
 
-- a CSV file: `top_50_films.csv`
-- a SQLite database table: `Top_50`
+After scraping the data, the script saves it into a CSV file:
 
-This makes the scraped data easier to store, view, and query using SQL.
+```python
+df.to_csv(csv_path, index=False)
+```
+
+The file created is:
+
+```text
+top_50_films.csv
+```
+
+The script also saves the same data into a SQLite database:
+
+```python
+conn = sqlite3.connect(db_name)
+df.to_sql(table_name, conn, if_exists='replace', index=False)
+```
+
+The database file created is:
+
+```text
+Movies.db
+```
+
+Inside the database, the table name is:
+
+```text
+Top_50
+```
+
+## SQL Query Example
+
+The script can run SQL queries on the database.
+
+For example, this query counts how many records are in the table:
+
+```python
+query = f"SELECT COUNT(*) FROM {table_name}"
+result = pd.read_sql(query, conn)
+```
+
+The SQL query is:
+
+```sql
+SELECT COUNT(*) FROM Top_50;
+```
+
+This confirms that the movie data was successfully saved into the SQLite database.
 
 ## Files in This Repository
 
 - `webscraping_movies.py`  
-  Scrapes the movie data from the website, creates a DataFrame, saves the data as a CSV file, and stores it in a SQLite database.
+  Main Python script. It scrapes movie data, saves it as a CSV file, and stores it in a SQLite database.
 
 - `query_movies.py`  
-  Connects to the SQLite database and runs SQL queries on the `Top_50` table.
+  Python file used to practice SQL queries on the SQLite database.
 
 - `top_50_films.csv`  
-  Contains the extracted top 50 movie data.
+  CSV file containing the extracted top 50 movie data.
 
 - `.gitignore`  
-  Prevents unnecessary files such as `Movies.db`, cache files, and Mac system files from being uploaded.
+  Prevents unnecessary files from being uploaded to GitHub.
+
+## Files Not Uploaded
+
+The file `Movies.db` is not uploaded to GitHub because it is a generated database file. It can be recreated by running the Python script.
+
+The `.gitignore` file prevents it from being uploaded.
 
 ## Technologies Used
 
@@ -97,23 +163,24 @@ This makes the scraped data easier to store, view, and query using SQL.
 - BeautifulSoup
 - Pandas
 - SQLite3
-- Git and GitHub
+- Git
+- GitHub
 
 ## How to Run the Project
 
-First, install the required Python libraries:
+Install the required Python libraries:
 
 ```bash
 pip install requests pandas beautifulsoup4
 ```
 
-Then run the web scraping script:
+Run the main script:
 
 ```bash
 python3 webscraping_movies.py
 ```
 
-To run SQL queries:
+Run the SQL query file:
 
 ```bash
 python3 query_movies.py
@@ -121,25 +188,25 @@ python3 query_movies.py
 
 ## Example SQL Queries
 
-Show all records from the table:
+Show all records:
 
 ```sql
 SELECT * FROM Top_50;
 ```
 
-Show only the first 10 records:
+Show the first 10 records:
 
 ```sql
 SELECT * FROM Top_50 LIMIT 10;
 ```
 
-Count the total number of records:
+Count all records:
 
 ```sql
 SELECT COUNT(*) FROM Top_50;
 ```
 
-Show films released after the year 2000:
+Show films released after 2000:
 
 ```sql
 SELECT Film, Year FROM Top_50 WHERE Year > 2000;
@@ -159,25 +226,26 @@ SELECT * FROM Top_50 ORDER BY "Average Rank" ASC;
 
 ## Output
 
-The project creates:
+When the script runs successfully, it creates:
 
-- A CSV file named `top_50_films.csv`
-- A SQLite database file named `Movies.db`
+- `top_50_films.csv`
+- `Movies.db`
 
-The database file is not uploaded to GitHub because it can be recreated by running the Python script.
+It also prints the scraped movie data and the saved file locations in the terminal.
 
 ## What I Learned
 
-Through this project, I practiced:
+Through this project, I learned how to:
 
-- Sending HTTP requests using Python
-- Parsing HTML using BeautifulSoup
-- Extracting table data from a webpage
-- Storing scraped data in a pandas DataFrame
-- Saving data into a CSV file
-- Creating a SQLite database
-- Running SQL queries on the extracted data
-- Uploading a project to GitHub
+- Send HTTP requests using Python
+- Parse HTML using BeautifulSoup
+- Extract table data from a webpage
+- Store data in a pandas DataFrame
+- Save data into a CSV file
+- Create a SQLite database
+- Save a DataFrame into a SQL table
+- Run SQL queries using Python
+- Use Git and GitHub to upload a project
 
 ## Author
 
